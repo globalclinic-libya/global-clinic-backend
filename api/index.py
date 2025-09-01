@@ -27,7 +27,7 @@ class User(db.Model):
     mobile_number = db.Column(db.String(20), unique=True, nullable=True)
     email = db.Column(db.String(120), unique=True, nullable=True)
     password_hash = db.Column(db.String(128))
-    role = db.Column(db.String(20), nullable=False)  # patient, doctor, admin
+    role = db.Column(db.String(20), nullable=False)
     is_verified = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
@@ -35,7 +35,7 @@ class Case(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     doctor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    status = db.Column(db.String(20), default='pending')  # pending, assigned, completed
+    status = db.Column(db.String(20), default='pending')
     audio_transcript_en = db.Column(db.Text)
     doctor_report = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
@@ -73,14 +73,11 @@ def register_patient():
     if not mobile_number:
         return jsonify({'message': 'Mobile number is required'}), 400
     
-    # Demo OTP verification (always accept 123456)
     if otp and otp != '123456':
         return jsonify({'message': 'Invalid OTP'}), 400
     
-    # Check if user exists
     user = User.query.filter_by(mobile_number=mobile_number).first()
     if not user:
-        # Create new patient
         user = User(
             mobile_number=mobile_number,
             role='patient',
@@ -89,7 +86,6 @@ def register_patient():
         db.session.add(user)
         db.session.commit()
     
-    # Generate JWT token
     token = jwt.encode({
         'user_id': user.id,
         'role': user.role,
@@ -106,47 +102,6 @@ def register_patient():
         }
     }), 200
 
-@app.route('/api/patients/cases', methods=['POST'])
-@token_required
-def submit_case(current_user):
-    if current_user.role != 'patient':
-        return jsonify({'message': 'Access denied'}), 403
-    
-    data = request.get_json()
-    audio_transcript = data.get('audio_transcript', '')
-    
-    case = Case(
-        patient_id=current_user.id,
-        audio_transcript_en=audio_transcript,
-        status='pending'
-    )
-    db.session.add(case)
-    db.session.commit()
-    
-    return jsonify({
-        'message': 'Case submitted successfully',
-        'case_id': case.id
-    }), 201
-
-@app.route('/api/patients/cases', methods=['GET'])
-@token_required
-def get_patient_cases(current_user):
-    if current_user.role != 'patient':
-        return jsonify({'message': 'Access denied'}), 403
-    
-    cases = Case.query.filter_by(patient_id=current_user.id).all()
-    cases_data = []
-    for case in cases:
-        doctor = User.query.get(case.doctor_id) if case.doctor_id else None
-        cases_data.append({
-            'id': case.id,
-            'status': case.status,
-            'doctor_name': doctor.email if doctor else 'Unassigned',
-            'created_at': case.created_at.isoformat()
-        })
-    
-    return jsonify(cases_data), 200
-
 @app.route('/api/doctors/login', methods=['POST'])
 def doctor_login():
     data = request.get_json()
@@ -156,12 +111,9 @@ def doctor_login():
     if not email or not password:
         return jsonify({'message': 'Email and password are required'}), 400
     
-    # Demo doctor credentials
     if email == 'doctor@globalclinic.com' and password == 'password123':
-        # Check if doctor exists
         doctor = User.query.filter_by(email=email).first()
         if not doctor:
-            # Create demo doctor
             doctor = User(
                 email=email,
                 password_hash=generate_password_hash(password),
@@ -171,7 +123,6 @@ def doctor_login():
             db.session.add(doctor)
             db.session.commit()
         
-        # Generate JWT token
         token = jwt.encode({
             'user_id': doctor.id,
             'role': doctor.role,
@@ -190,26 +141,6 @@ def doctor_login():
     
     return jsonify({'message': 'Invalid credentials'}), 401
 
-@app.route('/api/doctors/cases', methods=['GET'])
-@token_required
-def get_pending_cases(current_user):
-    if current_user.role != 'doctor':
-        return jsonify({'message': 'Access denied'}), 403
-    
-    cases = Case.query.filter_by(status='pending').all()
-    cases_data = []
-    for case in cases:
-        patient = User.query.get(case.patient_id)
-        cases_data.append({
-            'id': case.id,
-            'patient_mobile': patient.mobile_number if patient else 'Unknown',
-            'audio_transcript': case.audio_transcript_en,
-            'status': case.status,
-            'created_at': case.created_at.isoformat()
-        })
-    
-    return jsonify(cases_data), 200
-
 @app.route('/api/admin/login', methods=['POST'])
 def admin_login():
     data = request.get_json()
@@ -220,15 +151,12 @@ def admin_login():
     if not email or not password or not admin_key:
         return jsonify({'message': 'Email, password, and admin key are required'}), 400
     
-    # Demo admin credentials
     if (email == 'admin@globalclinic.com' and 
         password == 'AdminGlobal2024!' and 
         admin_key == 'GLOBAL_CLINIC_ADMIN_2024_SECURE_KEY'):
         
-        # Check if admin exists
         admin = User.query.filter_by(email=email).first()
         if not admin:
-            # Create demo admin
             admin = User(
                 email=email,
                 password_hash=generate_password_hash(password),
@@ -238,7 +166,6 @@ def admin_login():
             db.session.add(admin)
             db.session.commit()
         
-        # Generate JWT token
         token = jwt.encode({
             'user_id': admin.id,
             'role': admin.role,
@@ -257,29 +184,6 @@ def admin_login():
     
     return jsonify({'message': 'Invalid credentials'}), 401
 
-@app.route('/api/admin/cases', methods=['GET'])
-@token_required
-def get_all_cases(current_user):
-    if current_user.role != 'admin':
-        return jsonify({'message': 'Access denied'}), 403
-    
-    cases = Case.query.all()
-    cases_data = []
-    for case in cases:
-        patient = User.query.get(case.patient_id)
-        doctor = User.query.get(case.doctor_id) if case.doctor_id else None
-        cases_data.append({
-            'id': case.id,
-            'patient_id': case.patient_id,
-            'patient_mobile': patient.mobile_number if patient else 'Unknown',
-            'doctor_id': case.doctor_id,
-            'doctor_email': doctor.email if doctor else 'Unassigned',
-            'status': case.status,
-            'created_at': case.created_at.isoformat()
-        })
-    
-    return jsonify(cases_data), 200
-
 # Initialize database
 with app.app_context():
     db.create_all()
@@ -288,7 +192,6 @@ with app.app_context():
 def handler(request):
     return app(request.environ, lambda status, headers: None)
 
-# For local development
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)

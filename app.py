@@ -7,15 +7,29 @@ from functools import wraps
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'global-clinic-secret-key-2024'
 
-# Enable CORS for Vercel frontend domains
 CORS(app, origins=[
-    "https://global-clinic-patients.vercel.app",
-    "https://global-clinic-doctors.vercel.app", 
-    "https://global-clinic-admin.vercel.app",
-    "http://localhost:3000",  # For local development
-    "http://localhost:3001",
-    "http://localhost:3002"
-])
+    # 🔹Corrent application on  Railway
+    "https://global-clinic-patients-production.up.railway.app",
+    "https://global-clinic-doctors-production.up.railway.app",
+    "https://global-clinic-admin-production.up.railway.app",
+
+   # Local developer 
+    "http://localhost:3000",  # patients
+    "http://localhost:3001",  # doctors
+    "http://localhost:3002",  # admin
+
+#-----------------------------------------------------
+# Enable CORS for Vercel frontend domains
+# CORS(app, origins=[
+#     "https://global-clinic-patients.vercel.app",
+#     "https://global-clinic-doctors.vercel.app", 
+#     "https://global-clinic-admin.vercel.app",
+#     "http://localhost:3000",  # For local development
+#     "http://localhost:3001",
+#     "http://localhost:3002"
+# ])
+#------------------------------------------------------  
+
 
 # In-memory storage (for demo)
 users = {}

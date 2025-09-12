@@ -217,10 +217,10 @@ def get_patient_cases(current_user):
         return jsonify({'message': 'Access denied'}), 403
 
     patient_cases = [
-            case for case in cases.values() 
-            if case['patient_id'] == current_user['id']
-            ]
-         return jsonify({'cases': patient_cases}), 200
+        case for case in cases.values()
+        if case['patient_id'] == current_user['id']
+   ]
+    return jsonify({'cases': patient_cases}), 200
 
 
 @app.route('/api/patients/cases', methods=['POST'])

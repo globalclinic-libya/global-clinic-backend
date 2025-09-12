@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'global-clinic-secret-key-2024'
 
 
-# 🔹 التطبيقات الحالية على Railway
+# 🔹 on Railway
 CORS(app, origins=[
     "https://global-clinic-patients-production.up.railway.app",
     "https://global-clinic-doctors-production.up.railway.app",

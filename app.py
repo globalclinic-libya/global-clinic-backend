@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'global-clinic-secret-key-2024'
 
 
-# 🔹 for deploy on  Railway
+# for deploy on  Railway
 CORS(app, origins=[
     "https://global-clinic-patients-production.up.railway.app",
     "https://global-clinic-doctors-production.up.railway.app",
@@ -216,8 +216,11 @@ def get_patient_cases(current_user):
     if current_user['role'] != 'patient':
         return jsonify({'message': 'Access denied'}), 403
 
-    patient_cases = [case for case in cases.values() if case['patient_id'] == current_user['id']]
-    return jsonify({'cases': patient_cases}), 200
+    patient_cases = [
+            case for case in cases.values() 
+            if case['patient_id'] == current_user['id']
+            ]
+         return jsonify({'cases': patient_cases}), 200
 
 
 @app.route('/api/patients/cases', methods=['POST'])
@@ -246,3 +249,5 @@ def submit_case(current_user):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
+

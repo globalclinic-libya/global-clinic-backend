@@ -40,12 +40,10 @@ jobs:
 
       - name: Run lint (if applicable)
         run: |
-          # يمكنك إضافة flake8 أو pylint لاحقًا
-          echo "No linter configured yet"
-
+          flake8 .
+          
+       
       - name: Run tests
         run: |
-          # حاليًا لا يوجد اختبارات، لكن يمكن إضافة ملف test_api.py لاحقًا
-          echo "✅ No critical errors found"
-          # مثال مستقبلي:
-          # python -m pytest tests/ --verbose
+          python -m pytest tests/ --verbose
+          

@@ -36,14 +36,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install -r requirements.txt  # ← هنا سيتم تثبيت flake8
 
-      - name: Run lint (if applicable)
+      - name: Run lint
         run: |
-          flake8 .
-          
-       
+          flake8 .  # ✅ الآن سيكون متاحًا
+
       - name: Run tests
         run: |
           python -m pytest tests/ --verbose
-          

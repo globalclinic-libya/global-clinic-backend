@@ -7,17 +7,17 @@ from functools import wraps
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'global-clinic-secret-key-2024'
 
+# 🔹 التطبيقات الحالية على Railway
 CORS(app, origins=[
-    # 🔹Corrent application on  Railway
     "https://global-clinic-patients-production.up.railway.app",
     "https://global-clinic-doctors-production.up.railway.app",
     "https://global-clinic-admin-production.up.railway.app",
-
-   # Local developer 
+    # التطوير المحلي
     "http://localhost:3000",  # patients
     "http://localhost:3001",  # doctors
     "http://localhost:3002",  # admin
- ]) 
+])
+
 #-----------------------------------------------------
 # Enable CORS for Vercel frontend domains
 # CORS(app, origins=[
@@ -50,19 +50,22 @@ def token_required(f):
                 token = token[7:]
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
             current_user = users.get(data['user_id'])
-        except:
+        except Exception:
             return jsonify({'message': 'Token is invalid'}), 401
         
         return f(current_user, *args, **kwargs)
     return decorated
 
+
 @app.route('/')
 def home():
     return jsonify({"status": "healthy", "message": "Global Clinic API running on Railway"})
 
+
 @app.route('/api/status')
 def status():
     return jsonify({"status": "healthy", "message": "Global Clinic API running on Railway"})
+
 
 @app.route('/api/auth/register/api/patient/start', methods=['POST'])
 def patient_register():
@@ -97,6 +100,7 @@ def patient_register():
         'debug_otp': '123456',  # Demo OTP
         'mobile_number': mobile_number
     }), 200
+
 
 @app.route('/api/auth/verify-otp', methods=['POST'])
 def verify_otp():
@@ -136,6 +140,7 @@ def verify_otp():
         'role': 'patient'
     }), 200
 
+
 @app.route('/api/doctors/login', methods=['POST'])
 def doctor_login():
     global user_counter
@@ -166,6 +171,7 @@ def doctor_login():
     
     return jsonify({'message': 'Invalid credentials'}), 401
 
+
 @app.route('/api/admin/login', methods=['POST'])
 def admin_login():
     global user_counter
@@ -174,9 +180,11 @@ def admin_login():
     password = data.get('password')
     admin_key = data.get('admin_key')
     
-    if (email == 'admin@globalclinic.com' and 
-        password == 'AdminGlobal2024!' and 
-        admin_key == 'GLOBAL_CLINIC_ADMIN_2024_SECURE_KEY'):
+    if (
+        email == 'admin@globalclinic.com'  
+        and password == 'AdminGlobal2024!'  
+        and admin_key == 'GLOBAL_CLINIC_ADMIN_2024_SECURE_KEY'
+      ):
         
         user_id = 998  # Fixed admin ID
         users[user_id] = {
@@ -199,6 +207,7 @@ def admin_login():
     
     return jsonify({'message': 'Invalid credentials'}), 401
 
+
 @app.route('/api/patients/cases', methods=['GET'])
 @token_required
 def get_patient_cases(current_user):
@@ -207,6 +216,7 @@ def get_patient_cases(current_user):
     
     patient_cases = [case for case in cases.values() if case['patient_id'] == current_user['id']]
     return jsonify({'cases': patient_cases}), 200
+
 
 @app.route('/api/patients/cases', methods=['POST'])
 @token_required

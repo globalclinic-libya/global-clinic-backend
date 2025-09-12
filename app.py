@@ -17,7 +17,7 @@ CORS(app, origins=[
     "http://localhost:3000",  # patients
     "http://localhost:3001",  # doctors
     "http://localhost:3002",  # admin
-
+ ]) 
 #-----------------------------------------------------
 # Enable CORS for Vercel frontend domains
 # CORS(app, origins=[

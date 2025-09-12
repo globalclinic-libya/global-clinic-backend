@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'global-clinic-secret-key-2024'
 
 
-# for deploy on  Railway
+# for deploy on Railway
 CORS(app, origins=[
     "https://global-clinic-patients-production.up.railway.app",
     "https://global-clinic-doctors-production.up.railway.app",
@@ -186,8 +186,7 @@ def admin_login():
         email == 'admin@globalclinic.com'
         and password == 'AdminGlobal2024!'
         and admin_key == 'GLOBAL_CLINIC_ADMIN_2024_SECURE_KEY'
-      ):
-
+    ):
         user_id = 998  # Fixed admin ID
         users[user_id] = {
             'id': user_id,
@@ -219,7 +218,7 @@ def get_patient_cases(current_user):
     patient_cases = [
         case for case in cases.values()
         if case['patient_id'] == current_user['id']
-   ]
+    ]
     return jsonify({'cases': patient_cases}), 200
 
 
@@ -247,7 +246,8 @@ def submit_case(current_user):
         'case_id': case_id
     }), 201
 
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
-
-
+    
+    

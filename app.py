@@ -175,7 +175,7 @@ def doctor_login():
 
 
 @app.route('/api/admin/login', methods=['POST'])
-def admin_login()
+def admin_login():
     global user_counter
     data = request.get_json()
     email = data.get('email')

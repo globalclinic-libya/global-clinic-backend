@@ -9,9 +9,9 @@ app.config['SECRET_KEY'] = 'global-clinic-secret-key-2024'
 
 # Enable CORS for Vercel frontend domains
 CORS(app, origins=[
-    "https://global-clinic-patients.vercel.app",
-    "https://global-clinic-doctors.vercel.app", 
-    "https://global-clinic-admin.vercel.app",
+    "https://global-clinic-patients-production.up.railway.app",
+    "https://global-clinic-doctors-production.up.railway.app", 
+    "https://global-clinic-admin-production.up.railway.app",
     "http://localhost:3000",  # For local development
     "http://localhost:3001",
     "http://localhost:3002"

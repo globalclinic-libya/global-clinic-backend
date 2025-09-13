@@ -151,7 +151,10 @@ def doctor_login():
     password = data.get('password')
 
     # Demo doctor credentials
-    if email == 'doctor@globalclinic.com' and password == 'password123':
+    if ( 
+        email == 'doctor@globalclinic.com'
+        and password == 'password123':
+    ):
         user_id = 999  # Fixed doctor ID
         users[user_id] = {
             'id': user_id,
@@ -249,5 +252,3 @@ def submit_case(current_user):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
-    
-    

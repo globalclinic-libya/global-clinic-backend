@@ -50,17 +50,13 @@ def token_required(f):
         try:
             if token.startswith('Bearer '):
                 token = token[7:]
-    if (
-        email == 'doctor@globalclinic.com'
-        and password == 'password123'
-    ):
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
             current_user = users.get(data['user_id'])
         except Exception:
             return jsonify({'message': 'Token is invalid'}), 401
 
         return f(current_user, *args, **kwargs)
     return decorated
-
 
 @app.route('/')
 def home():

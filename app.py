@@ -153,7 +153,7 @@ def doctor_login():
     # Demo doctor credentials
     if ( 
         email == 'doctor@globalclinic.com'
-        and password == 'password123':
+        and password == 'password123'
     ):
         user_id = 999  # Fixed doctor ID
         users[user_id] = {

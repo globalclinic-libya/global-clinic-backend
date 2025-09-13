@@ -19,7 +19,7 @@ CORS(app, origins=[
 ])
 
 
-#-----------------------------------------------------
+# ----------------------------------------------------
 # Enable CORS for Vercel frontend domains
 # CORS(app, origins=[
 #     "https://global-clinic-patients.vercel.app",
@@ -29,7 +29,7 @@ CORS(app, origins=[
 #     "http://localhost:3001",
 #     "http://localhost:3002"
 # ])
-#------------------------------------------------------
+# ------------------------------------------------------
 
 
 # In-memory storage (for demo)

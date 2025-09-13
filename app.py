@@ -151,7 +151,7 @@ def doctor_login():
     password = data.get('password')
 
     # Demo doctor credentials
-    if ( 
+    if (
         email == 'doctor@globalclinic.com'
         and password == 'password123'
     ):

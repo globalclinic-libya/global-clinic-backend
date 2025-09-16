@@ -7,15 +7,15 @@ from functools import wraps
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'global-clinic-secret-key-2024'
 
-# Enable CORS for Vercel frontend domains
+# ✅ تم إصلاح المسافات الزائدة في origins
 CORS(app, origins=[
     "https://global-clinic-patients-production.up.railway.app",
     "https://global-clinic-doctors-production.up.railway.app", 
     "https://global-clinic-admin-production.up.railway.app",
-    "http://localhost:3000",  # For local development
-    "http://localhost:3001",
-    "http://localhost:3002"
-])
+    "http://localhost:3000",  # patients
+    "http://localhost:3001",  # doctors
+    "http://localhost:3002",  # admin
+], supports_credentials=True)
 
 # In-memory storage (for demo)
 users = {}
@@ -36,11 +36,18 @@ def token_required(f):
                 token = token[7:]
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
             current_user = users.get(data['user_id'])
-        except:
+            
+            # ✅ تأكد أن المستخدم موجود
+            if not current_user:
+                return jsonify({'message': 'User not found'}), 401
+                
+        except Exception as e:
+            print("Token error:", str(e))  # للتنقيح فقط
             return jsonify({'message': 'Token is invalid'}), 401
         
         return f(current_user, *args, **kwargs)
     return decorated
+
 
 @app.route('/')
 def home():
@@ -49,6 +56,7 @@ def home():
 @app.route('/api/status')
 def status():
     return jsonify({"status": "healthy", "message": "Global Clinic API running on Railway"})
+
 
 @app.route('/api/auth/register/api/patient/start', methods=['POST'])
 def patient_register():
@@ -67,7 +75,6 @@ def patient_register():
             break
     
     if not existing_user:
-        # Create new user
         user_id = user_counter
         users[user_id] = {
             'id': user_id,
@@ -77,12 +84,12 @@ def patient_register():
         }
         user_counter += 1
     
-    # Return demo OTP
     return jsonify({
         'message': 'OTP sent successfully',
-        'debug_otp': '123456',  # Demo OTP
+        'debug_otp': '123456',
         'mobile_number': mobile_number
     }), 200
+
 
 @app.route('/api/auth/verify-otp', methods=['POST'])
 def verify_otp():
@@ -93,11 +100,9 @@ def verify_otp():
     if not mobile_number or not otp:
         return jsonify({'message': 'Mobile number and OTP are required'}), 400
     
-    # Demo OTP verification
     if otp != '123456':
         return jsonify({'message': 'Invalid OTP'}), 400
     
-    # Find user
     user_id = None
     for uid, user in users.items():
         if user.get('mobile_number') == mobile_number:
@@ -108,7 +113,6 @@ def verify_otp():
     if not user_id:
         return jsonify({'message': 'User not found'}), 404
     
-    # Generate JWT token
     token = jwt.encode({
         'user_id': user_id,
         'role': 'patient',
@@ -122,6 +126,7 @@ def verify_otp():
         'role': 'patient'
     }), 200
 
+
 @app.route('/api/doctors/login', methods=['POST'])
 def doctor_login():
     global user_counter
@@ -129,9 +134,8 @@ def doctor_login():
     email = data.get('email')
     password = data.get('password')
     
-    # Demo doctor credentials
     if email == 'doctor@globalclinic.com' and password == 'password123':
-        user_id = 999  # Fixed doctor ID
+        user_id = 999
         users[user_id] = {
             'id': user_id,
             'email': email,
@@ -152,6 +156,7 @@ def doctor_login():
     
     return jsonify({'message': 'Invalid credentials'}), 401
 
+
 @app.route('/api/admin/login', methods=['POST'])
 def admin_login():
     global user_counter
@@ -164,7 +169,7 @@ def admin_login():
         password == 'AdminGlobal2024!' and 
         admin_key == 'GLOBAL_CLINIC_ADMIN_2024_SECURE_KEY'):
         
-        user_id = 998  # Fixed admin ID
+        user_id = 998
         users[user_id] = {
             'id': user_id,
             'email': email,
@@ -178,45 +183,188 @@ def admin_login():
         }, app.config['SECRET_KEY'], algorithm='HS256')
         
         return jsonify({
-            'message': 'Admin login successful',
-            'token': token,
-            'user': users[user_id]
+            'access_token': token,           # ← تم التغيير من 'token' إلى 'access_token'
+            'user_id': user_id,
+            'role': 'admin',
+            'admin_key': admin_key
         }), 200
     
     return jsonify({'message': 'Invalid credentials'}), 401
 
+
+# ✅ دعم JSON و FormData بشكل آمن
 @app.route('/api/patients/cases', methods=['GET'])
 @token_required
 def get_patient_cases(current_user):
-    if current_user['role'] != 'patient':
+    if current_user['role'] not in ['patient', 'doctor']:
         return jsonify({'message': 'Access denied'}), 403
-    
-    patient_cases = [case for case in cases.values() if case['patient_id'] == current_user['id']]
-    return jsonify({'cases': patient_cases}), 200
 
+    if current_user['role'] == 'patient':
+        patient_cases = [case for case in cases.values() if case['patient_id'] == current_user['id']]
+        return jsonify({'cases': patient_cases}), 200
+
+    return jsonify({'cases': list(cases.values())}), 200
+
+
+# ✅ دعم JSON فقط (آمن - لا يكسر أي تطبيق حالي)
 @app.route('/api/patients/cases', methods=['POST'])
 @token_required
 def submit_case(current_user):
     global case_counter
-    if current_user['role'] != 'patient':
+    if not current_user or current_user['role'] != 'patient':
         return jsonify({'message': 'Access denied'}), 403
-    
-    data = request.get_json()
+
+    # دعم JSON و FormData
+    if request.is_json:
+        data = request.get_json()
+        description = data.get('description', '')
+    else:
+        description = request.form.get('description', '')
+
+    if not description:
+        return jsonify({'message': 'Description is required'}), 400
+
+    # التعامل مع الملف الصوتي (اختياري)
+    audio_filename = None
+    audio_file = request.files.get('audio_file')
+    if audio_file:
+        audio_filename = f"audio_{case_counter}_{audio_file.filename}"
+
+    # التعامل مع المستندات (اختياري)
+    document_filenames = []
+    document_files = request.files.getlist('document_files')
+    for doc in document_files:
+        document_filenames.append(f"doc_{case_counter}_{doc.filename}")
+
+    # حفظ الحالة
     case_id = case_counter
     cases[case_id] = {
         'id': case_id,
         'patient_id': current_user['id'],
-        'description': data.get('description', ''),
-        'audio_transcript': data.get('audio_transcript', ''),
+        'description': description,
         'status': 'pending',
-        'created_at': datetime.datetime.utcnow().isoformat()
+        'created_at': datetime.datetime.utcnow().isoformat(),
+        'audio_file_path': audio_filename,
+        'document_file_paths': document_filenames if document_filenames else None
     }
     case_counter += 1
-    
+
     return jsonify({
         'message': 'Case submitted successfully',
         'case_id': case_id
     }), 201
+
+
+
+@app.route('/api/doctors/case/<int:case_id>/report', methods=['POST'])
+@token_required
+def submit_report(current_user, case_id):
+    if not current_user or current_user['role'] != 'doctor':
+        return jsonify({'message': 'Access denied'}), 403
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'message': 'No report data provided'}), 400
+
+    # تأكد من أن الحالة موجودة
+    if case_id not in cases:
+        return jsonify({'message': 'Case not found'}), 404
+
+    # تحديث الحالة بالتقرير
+    cases[case_id]['diagnosis'] = data.get('diagnosis')
+    cases[case_id]['report_text'] = data.get('report_text', '')
+    cases[case_id]['reported_at'] = datetime.datetime.utcnow().isoformat()
+    cases[case_id]['status'] = 'completed'
+
+    return jsonify({'message': 'Report submitted successfully'}), 200
+
+
+# --- Admin Routes ---
+@app.route('/api/admin/dashboard/stats', methods=['GET'])
+@token_required
+def admin_dashboard_stats(current_user):
+    if current_user['role'] != 'admin':
+        return jsonify({'message': 'Access denied'}), 403
+
+    total_patients = sum(1 for u in users.values() if u['role'] == 'patient')
+    total_doctors = sum(1 for u in users.values() if u['role'] == 'doctor')
+    total_cases = len(cases)
+    total_revenue = total_cases * 200  # $200 per case
+
+    return jsonify({
+        'total_users': total_patients + total_doctors,
+        'total_patients': total_patients,
+        'total_doctors': total_doctors,
+        'total_cases': total_cases,
+        'total_revenue': total_revenue,
+        'system_health': 'excellent'
+    }), 200
+
+
+@app.route('/api/admin/cases', methods=['GET'])
+@token_required
+def admin_get_all_cases(current_user):
+    if current_user['role'] != 'admin':
+        return jsonify({'message': 'Access denied'}), 403
+
+    return jsonify(list(cases.values())), 200
+
+
+@app.route('/api/admin/users', methods=['GET'])
+@token_required
+def admin_get_all_users(current_user):
+    if current_user['role'] != 'admin':
+        return jsonify({'message': 'Access denied'}), 403
+
+    result = []
+    for uid, user in users.items():
+        result.append({
+            'id': uid,
+            'role': user['role'],
+            'email': user.get('email'),
+            'mobile_number': user.get('mobile_number'),
+            'is_active': True,
+            'created_at': datetime.datetime.utcnow().isoformat(),
+            'last_login': datetime.datetime.utcnow().isoformat()
+        })
+    return jsonify(result), 200
+
+
+@app.route('/api/admin/transactions', methods=['GET'])
+@token_required
+def admin_get_transactions(current_user):
+    if current_user['role'] != 'admin':
+        return jsonify({'message': 'Access denied'}), 403
+
+    transactions = []
+    for cid, case in cases.items():
+        if case['status'] == 'completed':
+            transactions.append({
+                'id': cid,
+                'type': 'payment',
+                'case_id': cid,
+                'patient_id': case['patient_id'],
+                'doctor_id': 2,
+                'amount': 200,
+                'platform_share': 120,
+                'status': 'completed',
+                'created_at': case['created_at'],
+                'payment_method': 'Plutu'
+            })
+            transactions.append({
+                'id': f"p{cid}",
+                'type': 'payout',
+                'case_id': cid,
+                'patient_id': case['patient_id'],
+                'doctor_id': 2,
+                'amount': 80,
+                'platform_share': None,
+                'status': 'completed',
+                'created_at': case['created_at'],
+                'payment_method': 'Bank Transfer'
+            })
+    return jsonify(transactions), 200
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

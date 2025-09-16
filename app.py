@@ -12,9 +12,6 @@ CORS(app, origins=[
     "https://global-clinic-patients-production.up.railway.app",
     "https://global-clinic-doctors-production.up.railway.app", 
     "https://global-clinic-admin-production.up.railway.app",
-    "http://localhost:3000",  # patients
-    "http://localhost:3001",  # doctors
-    "http://localhost:3002",  # admin
 ], supports_credentials=True)
 
 # In-memory storage (for demo)

@@ -214,9 +214,9 @@ def submit_case(current_user):
     # دعم JSON و FormData
     if request.is_json:
         data = request.get_json()
-        description = data.get('description', '')
+        description = data.get('description')
     else:
-        description = request.form.get('description', '')
+        description = request.form.get('description')
 
     if not description:
         return jsonify({'message': 'Description is required'}), 400

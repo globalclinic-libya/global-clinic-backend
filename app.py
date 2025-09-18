@@ -386,11 +386,9 @@ def admin_get_transactions(current_user):
 
 
 def seed_data():
-    """إضافة بيانات تجريبية عند بدء الخادم"""
-    global case_counter, user_counter, users, cases
+    global cases, users, case_counter
 
-    if not cases:  # تجنب الإعادة إذا كانت البيانات موجودة
-        print("Seeding initial test data...")
+    if not cases:
         cases[1] = {
             'id': 1,
             'patient_id': 101,
@@ -398,7 +396,10 @@ def seed_data():
             'status': 'pending',
             'created_at': datetime.datetime.utcnow().isoformat(),
             'audio_file_path': None,
-            'document_file_paths': None
+            'document_file_paths': None,
+            'diagnosis': None,
+            'report_text': None,
+            'reported_at': None
         }
         case_counter = 2
 
@@ -410,8 +411,13 @@ def seed_data():
         }
         print("Doctor account seeded.")
 
+
 if __name__ == '__main__':
+
+
     seed_data()
+
+
     app.run(host='0.0.0.0', port=5000)
 
 

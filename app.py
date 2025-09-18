@@ -224,6 +224,7 @@ def get_patient_cases(current_user):
 
     return jsonify({'cases': result_cases}), 200
 
+
 # ✅ دعم JSON فقط (آمن - لا يكسر أي تطبيق حالي)
 @app.route('/api/patients/cases', methods=['POST'])
 @token_required
@@ -384,5 +385,38 @@ def admin_get_transactions(current_user):
     return jsonify(transactions), 200
 
 
+def seed_data():
+    """إضافة بيانات تجريبية عند بدء الخادم"""
+    global case_counter, user_counter, users, cases
+
+    if not cases:  # تجنب الإعادة إذا كانت البيانات موجودة
+        print("Seeding initial test data...")
+        cases[1] = {
+            'id': 1,
+            'patient_id': 101,
+            'description': 'Patient complains of severe headache and nausea.',
+            'status': 'pending',
+            'created_at': datetime.datetime.utcnow().isoformat(),
+            'audio_file_path': None,
+            'document_file_paths': None
+        }
+        case_counter = 2
+
+    if len([u for u in users.values() if u['role'] == 'doctor']) == 0:
+        users[999] = {
+            'id': 999,
+            'email': 'doctor@globalclinic.com',
+            'role': 'doctor'
+        }
+        print("Doctor account seeded.")
+
 if __name__ == '__main__':
+    seed_data()
     app.run(host='0.0.0.0', port=5000)
+
+
+
+
+
+#if __name__ == '__main__':
+#    app.run(host='0.0.0.0', port=5000)

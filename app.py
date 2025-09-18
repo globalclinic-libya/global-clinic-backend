@@ -2,17 +2,23 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import jwt
 import datetime
+import os
 from functools import wraps
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'global-clinic-secret-key-2024'
 
 # ✅ تم إصلاح المسافات الزائدة في origins
-CORS(app, origins=[
+
+# قائمة النطاقات المسموحة
+ALLOWED_ORIGINS = [
     "https://global-clinic-patients-production.up.railway.app",
-    "https://global-clinic-doctors-production.up.railway.app", 
-    "https://global-clinic-admin-production.up.railway.app",
-], supports_credentials=True)
+    "https://global-clinic-doctors-production.up.railway.app",
+    "https://global-clinic-admin-production.up.railway.app"
+]
+
+CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
+
 
 # In-memory storage (for demo)
 users = {}
@@ -379,17 +385,4 @@ def admin_get_transactions(current_user):
 
 
 if __name__ == '__main__':
-    # حالة تجريبية
-    global case_counter
-    cases[1] = {
-        'id': 1,
-        'patient_id': 101,
-        'description': 'Patient complains of severe headache and nausea.',
-        'status': 'pending',
-        'created_at': datetime.datetime.utcnow().isoformat(),
-        'audio_file_path': None,
-        'document_file_paths': None
-    }
-    case_counter = 2
-
     app.run(host='0.0.0.0', port=5000)

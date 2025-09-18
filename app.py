@@ -393,4 +393,3 @@ if __name__ == '__main__':
     case_counter = 2
 
     app.run(host='0.0.0.0', port=5000)
-    app.run(host='0.0.0.0', port=5000)

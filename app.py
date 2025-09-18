@@ -196,12 +196,27 @@ def get_patient_cases(current_user):
     if current_user['role'] not in ['patient', 'doctor']:
         return jsonify({'message': 'Access denied'}), 403
 
+    # تحويل الحالات إلى قائمة نظيفة
+    result_cases = []
+    for case in cases.values():
+        result_cases.append({
+            'id': int(case['id']),
+            'patient_id': int(case['patient_id']),
+            'description': case['description'],
+            'status': case['status'],
+            'created_at': case['created_at'],
+            'audio_file_path': case.get('audio_file_path'),
+            'document_file_paths': case.get('document_file_paths'),
+            'diagnosis': case.get('diagnosis'),
+            'report_text': case.get('report_text'),
+            'reported_at': case.get('reported_at')
+        })
+
     if current_user['role'] == 'patient':
-        patient_cases = [case for case in cases.values() if case['patient_id'] == current_user['id']]
-        return jsonify({'cases': patient_cases}), 200
+        filtered = [c for c in result_cases if c['patient_id'] == current_user['id']]
+        return jsonify({'cases': filtered}), 200
 
-    return jsonify({'cases': list(cases.values())}), 200
-
+    return jsonify({'cases': result_cases}), 200
 
 # ✅ دعم JSON فقط (آمن - لا يكسر أي تطبيق حالي)
 @app.route('/api/patients/cases', methods=['POST'])
@@ -364,4 +379,18 @@ def admin_get_transactions(current_user):
 
 
 if __name__ == '__main__':
+    # حالة تجريبية
+    global case_counter
+    cases[1] = {
+        'id': 1,
+        'patient_id': 101,
+        'description': 'Patient complains of severe headache and nausea.',
+        'status': 'pending',
+        'created_at': datetime.datetime.utcnow().isoformat(),
+        'audio_file_path': None,
+        'document_file_paths': None
+    }
+    case_counter = 2
+
+    app.run(host='0.0.0.0', port=5000)
     app.run(host='0.0.0.0', port=5000)
